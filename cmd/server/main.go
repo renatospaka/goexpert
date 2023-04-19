@@ -4,6 +4,8 @@ import (
 	"log"
 	"net/http"
 
+	"github.com/go-chi/chi"
+	"github.com/go-chi/chi/middleware"
 	"github.com/renatospaka/library/configs"
 	"github.com/renatospaka/library/internal/entity"
 	"github.com/renatospaka/library/internal/infra/database"
@@ -28,7 +30,10 @@ func main() {
 	productDB := database.NewProduct(db)
 	ProductHandler := handlers.NewProductHandler(productDB)
 
+	r := chi.NewRouter()
+	r.Use(middleware.Logger)
+	r.Post("/products", ProductHandler.CreateProduct)
+	
 	log.Println("servidor escutando porta:", 8000)
-	http.HandleFunc("/products", ProductHandler.CreateProduct)
-	http.ListenAndServe(":8000", nil)
+	http.ListenAndServe(":8000", r)
 }
