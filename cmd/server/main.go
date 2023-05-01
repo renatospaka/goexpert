@@ -16,7 +16,7 @@ import (
 
 func main() {
 	log.Println("iniciando a aplicação...")
-	_, err := configs.LoadConfig(".")
+	configs, err := configs.LoadConfig(".")
 	if err != nil {
 		log.Panic(err)
 	}
@@ -27,17 +27,22 @@ func main() {
 	}
 	db.AutoMigrate(&entity.Product{}, &entity.User{})
 
-	productDB := database.NewProduct(db)
-	ProductHandler := handlers.NewProductHandler(productDB)
-
 	r := chi.NewRouter()
 	r.Use(middleware.Logger)
+
+	productDB := database.NewProduct(db)
+	ProductHandler := handlers.NewProductHandler(productDB)
 	r.Post("/products", ProductHandler.CreateProduct)
 	r.Get("/products", ProductHandler.GetProducts)
 	r.Get("/products/{id}", ProductHandler.GetProduct)
 	r.Put("/products/{id}", ProductHandler.UpdateProduct)
 	r.Delete("/products/{id}", ProductHandler.DeleteProduct)
 	
+	userDB := database.NewUser(db)
+	UserHandler := handlers.NewUserHandler(userDB, configs.TokenAuth, configs.JWTExpiresIn)
+	r.Post("/users", UserHandler.Create)
+	r.Post("/users/generate_token", UserHandler.GetJWT)
+
 	log.Println("servidor escutando porta:", 8000)
 	http.ListenAndServe(":8000", r)
 }
