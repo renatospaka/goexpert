@@ -30,9 +30,12 @@ func main() {
 
 	r := chi.NewRouter()
 	r.Use(middleware.Logger)
+	r.Use(middleware.Recoverer)
+	r.Use(middleware.WithValue("jwt", configs.TokenAuth))
+	r.Use(middleware.WithValue("JWTExpiresIn", configs.JWTExpiresIn))
 	
 	userDB := database.NewUser(db)
-	UserHandler := handlers.NewUserHandler(userDB, configs.TokenAuth, configs.JWTExpiresIn)
+	UserHandler := handlers.NewUserHandler(userDB)
 	r.Post("/users", UserHandler.Create)
 	r.Post("/users/generate_token", UserHandler.GetJWT)
 
